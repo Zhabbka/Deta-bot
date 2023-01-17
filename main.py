@@ -1,1 +1,2 @@
 print('zhebs')
+print ('AMOGUS')
