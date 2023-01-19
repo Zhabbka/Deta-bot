@@ -2,9 +2,21 @@ import telebot
 import datetime
 from pprint import pprint
 import requests
+from aiogram import Bot, types
+from aiogram.dispatcher import Dispatcher
+from aiogram.utils import executor
+
 
 bot = telebot.TeleBot('5947033600:AAF6rJihphkXcxkzAVQVYwZXkV8mUM1XDUY')
 token_open_weather = ('8fff1770420e67a485593b01210eda78')
+dp = Dispatcher(bot)
+
+@dp.message_handlers(commands=["start"])
+async def start_command(message: types.Message):
+    await message.reply("Привет! напишиназвание города")
+
+@dp.message_handlers ()
+async def get_weather(message: types.Message):
 def get_weather(city, token_open_weather):
     try:
         z = requests.get(
@@ -22,22 +34,18 @@ def get_weather(city, token_open_weather):
         sunset_timestamp = datetime.datetime.fromtimestamp(data["sys"]["sunrise"])
         length_of_the_day = datetime.datetime.fromtimestamp(data["sys"]["sunrise"]) - datetime.datetime.fromtimestamp(data["sys"]["sunrise"])
 
-        print(f"***{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}***\n"
+        await message.reply(f"***{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}***\n"
               f"Погода в городе: {city}\nТемпература: {cur_weather}C°\n"
               f"Влажность: {humidity}%\nДавление: {pressure} мм.рт.ст\nВетер: {wind}\n"
               f"Восход солнца: {sunrise_timestamp}\nЗакат солнца: {sunset_timestamp}\nПродолжительность дня: {length_of_the_day}\n"
               f"Хорошего дня)"
               )
 
-    except  Exception as ex:
-        print(ex)
-        print("Проверьте название города")
-def main():
-    city = input("Введите город: ")
-    get_weather(city, token_open_weather)
+    except:
+        await message.reply("Проверьте название города")
 
 if __name__ == '__main__':
-     main()
+    executor.start_polling(dp)
 
 
 
