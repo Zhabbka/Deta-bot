@@ -1,6 +1,7 @@
 import datetime
 import requests
 import random
+import re
 from pytube import YouTube
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher, FSMContext
@@ -28,9 +29,9 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 # Кнопки для клавы
-horo_button = KeyboardButton('/Гороскоп')
-weather_button = KeyboardButton('/Погода')
-youtube_button = KeyboardButton ('/YouTube')
+horo_button = KeyboardButton('/Гороскоп♍')
+weather_button = KeyboardButton('/Погода⛅')
+youtube_button = KeyboardButton('/YouTube📽')
 # Клава
 keyboard = ReplyKeyboardMarkup()
 keyboard.add(horo_button).add(weather_button).add(youtube_button)
@@ -43,12 +44,13 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(horo, commands=['Гороскоп'])
 
 
+
 @dp.message_handler(commands=["start"])
 async def start_command(message: types.Message):
-    await message.reply("Привет!", reply_markup=keyboard)
+    await message.answer("Привет! Я DETA bot\nМогу подсказать тебе погоду на сегодня\nСоставить гороскоп\nСкачать видео с YouTube", reply_markup=keyboard)
 
 
-@dp.message_handler(commands=['Погода'])
+@dp.message_handler(commands=['Погода⛅'])
 async def weather(message: types.Message):
     await message.answer('Введите название города')
     await WeatherState.weather.set()
@@ -102,9 +104,9 @@ third = ["Злые языки могут говорить вам обратно�
          "Не нужно бояться одиноких встреч — сегодня то самое время, когда они значат многое.",
          "Если встретите незнакомца на пути — проявите участие, и тогда эта встреча посулит вам приятные хлопоты."]
 
-@dp.message_handler(commands=['Гороскоп'])
+@dp.message_handler(commands=['Гороскоп♍'])
 async def horo(message: types.Message):
-    await message.answer('Сейчас я расскажу тебе гороскоп на сегодня, выбери свой знак зодиака')
+    await message.answer('Сейчас я расскажу тебе гороскоп на сегодня')
     keyboard = types.InlineKeyboardMarkup()
     # По очереди готовим текст и обработчик для каждого знака зодиака
     key_oven = types.InlineKeyboardButton(text='Овен', callback_data='zodiac')
@@ -147,10 +149,29 @@ async def callback_worker(call):
         await bot.send_message(call.message.chat.id, msg)
 
 
-@dp.message_handler(commands=['Youtube'])
-async def download_audio(message: types.Message):
-    await message.answer('Введите ссылку на видео с You')
-    await YouTubeState.youtube.set()
+@dp.message_handler(commands=['YouTube📽'])
+async def process_start_command(message: types.Message):
+    await message.answer('Скинь ссылку на видео с YouTube, которое нужно скачать ')
+
+
+@dp.message_handler()
+async def echo_message(message: types.Message):
+    try:
+        link = message.text
+        yt = YouTube(link)
+
+
+        await bot.send_message(message.from_user.id, text='Видео загружается !')
+
+        ys = yt.streams.filter(progressive=True, file_extension='mp4').get_highest_resolution()
+        ys.download()
+        print(yt.title)
+        title = re.sub(r'[.,]', '', yt.title)
+        video = open(f'{title}.mp4', 'rb')
+
+        await bot.send_video(message.from_user.id, video)
+    except Exception:
+        await  bot.send_message(message.from_user.id, "Что то пошло не так, попробуйте еще раз.")
 
 
 
